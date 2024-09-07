@@ -11,30 +11,32 @@ function buildForwardRequestOptions (req) {
     };
 }
 
-function handleForwardingRequest (req, res) {
-    const forwardRequestOptions = buildForwardRequestOptions(req);
-    const forwardReq = http.get(req.url, forwardRequestOptions);
+async function forwardRequest (req, res) {
+    return new Promise((resolve, reject) => {
+        const forwardRequestOptions = buildForwardRequestOptions(req);
+        const forwardReq = http.get(req.url, forwardRequestOptions);
+    
+        forwardReq.once('response', (externalRes) => {
+            const ip = externalRes.socket.localAddress;
+            const port = externalRes.socket.localPort;
+            const targetPort = externalRes.socket.remotePort;
+            
+            console.log(`Request made.  Target: ${forwardRequestOptions.host}:${targetPort} Client: ${ip}:${port}`);
+            
+            let body = [];
+            externalRes.on('data', chunk => body.push(chunk));
+            externalRes.on('end', () => {
+                body = Buffer.concat(body).toString();
+                res.body = body;
+                resolve();
+            });
+        });
 
-    forwardReq.once('response', (externalRes) => {
-        const ip = externalRes.socket.localAddress;
-        const port = externalRes.socket.localPort;
-        const targetPort = externalRes.socket.remotePort;
-        
-        console.log(`Request made.  Target: ${forwardRequestOptions.host}:${targetPort} Client: ${ip}:${port}`);
-        
-        let body = [];
-        externalRes.on('data', (chunk) => {
-            body.push(chunk);
-        });
-        externalRes.on('end', () => {
-            body = Buffer.concat(body).toString();
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(body);
-        });
+        forwardReq.on('error', reject);
     });
 }
 
 
 module.exports = {
-    handleForwardingRequest,
+    forwardRequest,
 };
