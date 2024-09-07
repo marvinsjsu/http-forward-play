@@ -1,13 +1,13 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
+
+const bannedWords = [];
+const bannedDomains = [];
 const forbiddenHeaderOptions = {
     'X-Content-Type-Options': 'no-sniff',
     'Content-Type': 'text/plain',
 };
-
-let bannedWords = [];
-let bannedDomains = [];
 
 async function loadBannedWords () {
     try {
@@ -32,7 +32,12 @@ async function loadBannedDomains () {
         const domainData = await fs.readFile(pathToBannedDomainsFile, { encoding: 'utf8' });
 
         if (domainData) {
-            bannedDomains = domainData.split('\n');
+            const bannedDomainsArr = domainData.split('\n');
+            bannedDomainsArr.forEach(domain => {
+                if (Boolean(domain)) {
+                    bannedDomains.push(domain);
+                }
+            });
         }
     } catch (err) {
         console.error('Failed to load banned domains.', err);
@@ -62,8 +67,9 @@ function forbidBannedWords (req, res) {
 }
 
 module.exports = {
+    bannedWords,
+    bannedDomains,
+    forbiddenHeaderOptions,
     loadBannedWords,
     loadBannedDomains,
-    forbidBlockedDomains,
-    forbidBannedWords,
 };

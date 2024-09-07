@@ -1,5 +1,5 @@
-const { forbidBlockedDomains, forbidBannedWords } = require('./service/access.service');
-const { forwardRequest } = require('./service/proxy.service');
+const { forbidBlockedDomains, forbidBannedWords } = require('./middlewares/access.middleware');
+const { forwardRequest } = require('./middlewares/proxy.middleware');
 
 const handlers = [
     forbidBlockedDomains,

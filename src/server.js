@@ -4,7 +4,7 @@ const app = require('./app');
 const {
     loadBannedWords,
     loadBannedDomains,
-} = require('./service/access.service');
+} = require('./services/access.service');
 
 const PORT = 8989;
 
@@ -14,7 +14,7 @@ server.listen(PORT, async () => {
     
     await loadBannedWords();
     await loadBannedDomains();
-
+    
     const address = server.address();
     console.log(`Starting proxy server on ${address.address}:${address.port}`);
 });

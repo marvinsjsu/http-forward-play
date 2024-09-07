@@ -1,22 +1,13 @@
 const http = require('http');
 
-
-function buildForwardRequestOptions (req) {
-    const host = req.headers.host;
-    const clientIPAddress = req.socket.remoteAddress;
-
-    return {
-        headers: { 'X-Forwarded-For': `${clientIPAddress}` },
-        host,
-    };
-}
+const { buildForwardRequestOptions } = require('../services/proxy.service');
 
 async function forwardRequest (req, res) {
     return new Promise((resolve, reject) => {
         const forwardRequestOptions = buildForwardRequestOptions(req);
-        const forwardReq = http.get(req.url, forwardRequestOptions);
+        const forwardRequest = http.get(req.url, forwardRequestOptions);
     
-        forwardReq.once('response', (externalRes) => {
+        forwardRequest.once('response', (externalRes) => {
             const ip = externalRes.socket.localAddress;
             const port = externalRes.socket.localPort;
             const targetPort = externalRes.socket.remotePort;
@@ -32,11 +23,14 @@ async function forwardRequest (req, res) {
             });
         });
 
-        forwardReq.on('error', reject);
+        forwardRequest.on('error', (err) => {
+            console.error(`Error with request to target server: ${err.message}`);
+            reject(err);
+        });
     });
 }
 
 
 module.exports = {
-    forwardRequest,
+    forwardRequest
 };
